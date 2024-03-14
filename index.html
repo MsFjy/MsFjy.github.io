@@ -1,0 +1,163 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Document</title>
+    <style>
+      body {
+        display: flex;
+        justify-content: center;
+      }
+      #all {
+        width: 300px;
+        height: 300px;
+        border: 1px solid gray;
+        border-radius: 10px;
+      }
+      #all li {
+        border: 1px solid gray;
+        color: gray;
+        margin-left: -22px;
+        position: relative;
+      }
+      li button {
+        position: absolute;
+        right: 0;
+      }
+
+      #all h4 {
+        font-weight: bolder;
+      }
+    </style>
+  </head>
+  <body>
+    <div id="all">
+      <h4>小金记事本</h4>
+      <h3 id="taskInput">请输入任务</h3>
+      <ul id="myList"></ul>
+      <p id="demo"></p>
+      <button onclick="ClearTasks()">Clear</button>
+    </div>
+  </body>
+  <script>
+
+    const myList = document.getElementById("myList");
+    const taskInput = document.getElementById("taskInput");
+    const demo = document.getElementById("demo");
+
+    //封装创建列表项的逻辑
+    function createListItem(Content) {
+      const newItem = document.createElement("li");
+      const newSpan = document.createElement("span");
+      newSpan.textContent=Content;
+      newSpan.addEventListener("dblclick",handleDoubleClick);
+      const newButton = document.createElement("button");
+      newButton.textContent="x";
+      newButton.addEventListener("click",handleDelete);
+      newItem.appendChild(newSpan);
+      newItem.appendChild(newButton);
+      return newItem;
+    }
+
+    function createH3Input() {
+      const newH3 = document.createElement("h3");
+      newH3.textContent="请输入内容";
+      newH3.addEventListener("dblclick",H3DoubleClick);
+      return newH3;
+    }
+
+    // 将数据保存到localStorage
+    function saveToLocalStorage() {
+      // const items = Array.from(myList.children,(child) => child.querySelector("span").textContent);
+      const items = Array.from(myList.children).map((child) => child.querySelector("span").textContent);
+      localStorage.setItem("list", JSON.stringify(items));
+      console.log(items);
+    }
+
+    // 从localStorage中获取数据 
+    function loadFromLocalStorage() {
+      const data = JSON.parse(localStorage.getItem("list") || '[]');
+      data.forEach((itemText) => {
+        const listItem = createListItem(itemText); 
+        myList.appendChild(listItem);
+      });
+      updateItemCount();
+    }
+
+    //清空所有列表项并更新显示和本地存储
+    function ClearTasks() {
+      while (myList.firstChild) {
+        myList.removeChild(myList.firstChild);
+      }   
+      saveToLocalStorage();
+      updateItemCount();
+    }
+
+    //删除当前列表项并更新显示和本地存储
+    function handleDelete() {
+      this.parentNode.remove();
+      saveToLocalStorage();
+      updateItemCount();
+    }
+
+    //失去焦点后保存，并将输入框转换为span
+    function handleBlur() {
+      const value = this.value.trim();
+      if(value){
+        const newSpan = document.createElement("span");
+        newSpan.textContent = value;
+        this.parentNode.replaceChild(newSpan, this);
+        
+      }else{
+        this.parentNode.remove();
+      }
+      saveToLocalStorage();
+      updateItemCount();
+    }
+
+    //双击复制当前内容到输入框并替换原列表项
+    function handleDoubleClick() {
+      const newInput = document.createElement("input");
+      newInput.value = this.textContent;
+      this.parentNode.replaceChild(newInput, this);
+      newInput.addEventListener("blur", handleBlur);
+    }
+
+    //当输入框中按下回车键时触发，处理添加新列表项的逻辑
+    function handleEnter(event) {
+      if (event.keyCode === 13) {
+        const value = this.value.trim();
+        if(value){
+          const newItem = createListItem(value);
+          myList.appendChild(newItem);
+          this.parentNode.replaceChild(createH3Input(),this);
+          saveToLocalStorage();
+          updateItemCount();
+        }
+      }
+    }
+
+    //当<h3>元素被双击时触发，处理转换为输入框的逻辑
+    function H3DoubleClick()  {
+      const newInput = document.createElement("input");
+      this.parentNode.replaceChild(newInput, this);
+      newInput.addEventListener("keydown", handleEnter);
+    }
+
+    
+    function updateItemCount(){
+      demo.textContent= `${myList.childElementCount} items`;
+    }
+    
+
+    taskInput.addEventListener("dblclick", H3DoubleClick);
+    
+    window.onload = () => {
+      loadFromLocalStorage();
+
+    };
+  
+    
+  </script>
+</html>
